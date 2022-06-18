@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package protobuf;
+
+option go_package = "github.com/joesjo/grpc-store/authentication/protobuf";
+
+service AuthenticationService {
+  rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse) {}
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
+  rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse) {}
+}
+
+message User {
+  string username = 1;
+  string password = 2;
+}
+
+message AuthenticateRequest {
+  User user = 1;
+}
+
+message AuthenticateResponse {
+  string token = 1;
+  string error = 2;
+}
+
+message CreateUserRequest {
+  User user = 1;
+}
+
+message CreateUserResponse {
+  string error = 1;
+}
+
+message ValidateTokenRequest {
+  string token = 1;
+}
+
+message ValidateTokenResponse {
+  string username = 1;
+}
