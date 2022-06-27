@@ -68,6 +68,7 @@ func find(filter primitive.D) ([]*pb.InventoryItem, error) {
 			return nil, err
 		}
 		copier.Copy(resultItem, &item.InventoryItem)
+		resultItem.Id = item.Id.Hex()
 		result = append(result, resultItem)
 	}
 	return result, nil
