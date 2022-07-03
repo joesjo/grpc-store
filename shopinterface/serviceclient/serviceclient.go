@@ -3,9 +3,15 @@ package serviceclient
 import (
 	"context"
 	"io"
+	"log"
+	"os"
 
 	inventorypb "github.com/joesjo/grpc-store/inventory/protobuf"
 	"google.golang.org/grpc"
+)
+
+const (
+	inventoryuri = "localhost:8081"
 )
 
 var (
@@ -13,10 +19,15 @@ var (
 )
 
 func Init() {
-	conn, err := grpc.Dial("localhost:8080", grpc.WithInsecure())
+	url, exists := os.LookupEnv("INVENTORY_URI")
+	if !exists {
+		url = inventoryuri
+	}
+	conn, err := grpc.Dial(url, grpc.WithInsecure())
 	if err != nil {
 		panic(err)
 	}
+	log.Println("Connected to inventory service")
 	inventoryClient = inventorypb.NewInventoryServiceClient(conn)
 }
 

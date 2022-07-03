@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"log"
+	"os"
 	"time"
 
 	"github.com/jinzhu/copier"
@@ -16,7 +17,7 @@ import (
 )
 
 const (
-	mongouri       = "mongodb://localhost:2717"
+	mongouri       = "mongodb://mongo:27017"
 	databaseName   = "store"
 	collectionName = "inventory"
 )
@@ -33,7 +34,11 @@ type InventoryItem struct {
 }
 
 func Init() {
-	client, err = mongo.NewClient(options.Client().ApplyURI(mongouri))
+	url, exists := os.LookupEnv("MONGO_URI")
+	if !exists {
+		url = mongouri
+	}
+	client, err = mongo.NewClient(options.Client().ApplyURI(url))
 	if err != nil {
 		log.Fatal(err)
 	}

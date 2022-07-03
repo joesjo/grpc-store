@@ -1,0 +1,58 @@
+version: '3'
+services:
+  mongo:
+    image: 'mongo:latest'
+    container_name: 'mongo'
+    expose:
+      - '27017'
+    volumes:
+      - database_vol:/data/db
+    networks:
+      - grpc-store
+  inventory:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+      args:
+        project: ./inventory/
+    environment:
+      - PORT=8080
+      - APP_NAME=inventory
+      - MONGO_URI=mongodb://mongo:27017
+    expose:
+      - '8080'
+    restart: on-failure
+    volumes:
+      - inventory_vol:/usr/src/inventory/
+    networks:
+      - grpc-store
+    depends_on:
+      - mongo
+  shopinterface:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+      args:
+        project: ./shopinterface/
+    environment:
+      - PORT=8080
+      - APP_NAME=shopinterface
+      - INVENTORY_URI=inventory:8080
+    ports:
+      - 8080:8080
+    restart: on-failure
+    volumes:
+      - shopinterface_vol:/usr/src/shopinterface/
+    networks:
+      - grpc-store
+    depends_on:
+      - inventory
+
+volumes:
+  inventory_vol:
+  shopinterface_vol:
+  database_vol:
+
+networks:
+  grpc-store:
+    driver: bridge
