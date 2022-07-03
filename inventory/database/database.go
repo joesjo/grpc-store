@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"errors"
 	"log"
 	"time"
 
@@ -12,6 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const (
@@ -106,7 +107,7 @@ func FindById(itemId string) (*pb.InventoryItem, error) {
 		return nil, err
 	}
 	if len(res) == 0 {
-		return nil, errors.New("Could not find item with id: " + itemId)
+		return nil, status.Errorf(codes.NotFound, "Could not find item with id "+itemId)
 	}
 	return res[0], nil
 }
@@ -136,9 +137,10 @@ func UpdateItem(item *pb.InventoryItem) (int64, error) {
 
 func DeleteItem(itemId string) (int64, error) {
 	log.Println("Deleting item:", itemId)
+	objId, err := primitive.ObjectIDFromHex(itemId)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	filter := bson.D{{Key: "_id", Value: itemId}}
+	filter := bson.D{{Key: "_id", Value: objId}}
 	res, err := collection.DeleteOne(ctx, filter)
 	return res.DeletedCount, err
 }
