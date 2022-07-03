@@ -1,0 +1,23 @@
+type Item {
+  _id: String!
+  name: String!
+  quantity: Int!
+}
+
+type Query {
+  items: [Item!]!
+  item(_id: String!): Item!
+  findItems(name: String!): [Item!]!
+}
+
+input IncrementItem {
+  _id: String!
+  quantity: Int!
+}
+
+type Mutation {
+  createItem(name: String!, quantity: Int!): Item!
+  updateItem(_id: String!, name: String, quantity: Int): Item!
+  deleteItem(_id: String!): Boolean!
+  incrementItem(input: IncrementItem!): Item!
+}
