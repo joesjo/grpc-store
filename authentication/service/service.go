@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net"
+	"os"
 
 	"github.com/joesjo/grpc-store/authentication/database"
 	pb "github.com/joesjo/grpc-store/authentication/protobuf"
@@ -15,7 +16,7 @@ import (
 )
 
 const (
-	port = ":8081"
+	DEFAULT_PORT = "8081"
 )
 
 type server struct {
@@ -36,10 +37,12 @@ func (s *server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb
 	var err error
 	err = validate.Var(req.User.Username, "required,min=3,max=20")
 	if err != nil {
+		log.Println("Username err:", err)
 		return nil, &InvalidRequestError{message: err.Error()}
 	}
 	err = validate.Var(req.User.Password, "required,min=8,max=20")
 	if err != nil {
+		log.Println("Password err:", err)
 		return nil, &InvalidRequestError{message: err.Error()}
 	}
 	foundUser, err := database.FindUser(req.User.Username)
@@ -71,6 +74,9 @@ func (s *server) Authenticate(ctx context.Context, req *pb.AuthenticateRequest) 
 	}
 	foundUser, err := database.FindUser(req.User.Username)
 	if err != nil {
+		if err.Error() == "mongo: no documents in result" {
+			return nil, &InvalidRequestError{message: "user not found"}
+		}
 		return nil, err
 	}
 	if foundUser == nil {
@@ -96,7 +102,11 @@ func (s *server) ValidateToken(ctx context.Context, req *pb.ValidateTokenRequest
 }
 
 func Start() {
-	lis, err := net.Listen("tcp", port)
+	port, exists := os.LookupEnv("PORT")
+	if !exists {
+		port = DEFAULT_PORT
+	}
+	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		log.Fatal(err)
 	}

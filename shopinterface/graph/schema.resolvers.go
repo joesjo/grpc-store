@@ -71,6 +71,17 @@ func (r *mutationResolver) IncrementItem(ctx context.Context, input model.Increm
 	}, nil
 }
 
+func (r *mutationResolver) CreateUser(ctx context.Context, username string, password string) (bool, error) {
+	response, err := serviceclient.CreateUser(username, password)
+	if err != nil {
+		return false, err
+	}
+	if response != "" {
+		return false, fmt.Errorf(response)
+	}
+	return true, err
+}
+
 func (r *queryResolver) Items(ctx context.Context) ([]*model.Item, error) {
 	itemArray, err := serviceclient.GetInventory()
 	if err != nil {
@@ -113,6 +124,22 @@ func (r *queryResolver) FindItems(ctx context.Context, name string) ([]*model.It
 		}
 	}
 	return items, nil
+}
+
+func (r *queryResolver) Login(ctx context.Context, username string, password string) (string, error) {
+	token, err := serviceclient.Login(username, password)
+	if err != nil {
+		return "", err
+	}
+	return token, nil
+}
+
+func (r *queryResolver) ValidateToken(ctx context.Context, token string) (string, error) {
+	username, err := serviceclient.ValidateToken(token)
+	if err != nil {
+		return "", err
+	}
+	return username, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

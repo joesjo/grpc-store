@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net"
+	"os"
 
 	"github.com/joesjo/grpc-store/inventory/database"
 	pb "github.com/joesjo/grpc-store/inventory/protobuf"
@@ -11,7 +12,7 @@ import (
 )
 
 const (
-	port = ":8080"
+	DEFAULT_PORT = "8082"
 )
 
 type server struct {
@@ -102,7 +103,11 @@ func (s *server) IncrementItemQuantity(ctx context.Context, req *pb.IncrementIte
 }
 
 func Start() {
-	lis, err := net.Listen("tcp", port)
+	port, exists := os.LookupEnv("PORT")
+	if !exists {
+		port = DEFAULT_PORT
+	}
+	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		log.Fatal(err)
 	}

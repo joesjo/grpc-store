@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	defaultPort = "8082"
+	defaultPort = "8080"
 )
 
 func main() {

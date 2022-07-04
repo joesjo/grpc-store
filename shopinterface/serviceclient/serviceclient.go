@@ -6,29 +6,54 @@ import (
 	"log"
 	"os"
 
+	authenticationpb "github.com/joesjo/grpc-store/authentication/protobuf"
 	inventorypb "github.com/joesjo/grpc-store/inventory/protobuf"
 	"google.golang.org/grpc"
 )
 
 const (
-	inventoryuri = "localhost:8081"
+	INVENTORY_URI      = "localhost:8082"
+	AUTHENTICATION_URI = "localhost:8081"
 )
 
 var (
-	inventoryClient inventorypb.InventoryServiceClient
+	inventoryClient      inventorypb.InventoryServiceClient
+	authenticationClient authenticationpb.AuthenticationServiceClient
 )
 
 func Init() {
-	url, exists := os.LookupEnv("INVENTORY_URI")
-	if !exists {
-		url = inventoryuri
-	}
+	go func() {
+		inventoryurl, exists := os.LookupEnv("INVENTORY_URI")
+		if !exists {
+			inventoryurl = INVENTORY_URI
+		}
+		inventoryClient = connectInventory(inventoryurl)
+	}()
+	go func() {
+		authenticationurl, exists := os.LookupEnv("AUTHENTICATION_URI")
+		if !exists {
+			authenticationurl = AUTHENTICATION_URI
+		}
+		authenticationClient = connectAuthentication(authenticationurl)
+	}()
+}
+
+func connectInventory(url string) inventorypb.InventoryServiceClient {
 	conn, err := grpc.Dial(url, grpc.WithInsecure())
 	if err != nil {
 		panic(err)
 	}
 	log.Println("Connected to inventory service")
-	inventoryClient = inventorypb.NewInventoryServiceClient(conn)
+	return inventorypb.NewInventoryServiceClient(conn)
+}
+
+func connectAuthentication(url string) authenticationpb.AuthenticationServiceClient {
+	conn, err := grpc.Dial(url, grpc.WithInsecure())
+	if err != nil {
+		panic(err)
+	}
+	log.Println("Connected to authentication service")
+	return authenticationpb.NewAuthenticationServiceClient(conn)
 }
 
 // Get inventory using grpc stream
@@ -105,4 +130,22 @@ func DeleteItem(itemId string) error {
 	itemRequest := &inventorypb.DeleteItemRequest{Id: itemId}
 	_, err := inventoryClient.DeleteItem(context.Background(), itemRequest)
 	return err
+}
+
+func CreateUser(username string, password string) (string, error) {
+	userRequest := &authenticationpb.CreateUserRequest{User: &authenticationpb.User{Username: username, Password: password}}
+	userId, err := authenticationClient.CreateUser(context.Background(), userRequest)
+	return userId.GetError(), err
+}
+
+func Login(username string, password string) (string, error) {
+	userRequest := &authenticationpb.AuthenticateRequest{User: &authenticationpb.User{Username: username, Password: password}}
+	userId, err := authenticationClient.Authenticate(context.Background(), userRequest)
+	return userId.GetToken(), err
+}
+
+func ValidateToken(token string) (string, error) {
+	userRequest := &authenticationpb.ValidateTokenRequest{Token: token}
+	userId, err := authenticationClient.ValidateToken(context.Background(), userRequest)
+	return userId.GetUsername(), err
 }

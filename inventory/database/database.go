@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	mongouri       = "mongodb://mongo:27017"
+	mongouri       = "mongodb://localhost:2717"
 	databaseName   = "store"
 	collectionName = "inventory"
 )
